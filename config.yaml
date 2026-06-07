@@ -1,0 +1,25 @@
+identity:
+  name: Hermes Prospecting Agent
+  purpose: Find Clypify leads and draft outreach daily
+
+models:
+  primary:
+    provider: google
+    model: gemini-2.0-flash
+    api_key_env: GOOGLE_API_KEY
+  fallback:
+    provider: xai
+    model: grok-3-mini
+    base_url: https://api.x.ai/v1
+    api_key_env: GROK_API_KEY
+
+schedule:
+  cron: "0 7 * * *"
+
+output:
+  dir: ./output
+  template: ./templates/report.html
+
+scrapers:
+  lookback_hours: 24
+  seen_cache: ./seen.json

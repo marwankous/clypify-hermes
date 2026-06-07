@@ -1,0 +1,44 @@
+name: Hermes Daily Run
+
+on:
+  schedule:
+    - cron: '0 7 * * *'   # 7am UTC every day
+  workflow_dispatch:        # manual trigger from GitHub UI
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Hermes
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        run: python run.py
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: leads-${{ github.run_id }}
+          path: output/*.html
+          retention-days: 30
+
+      - name: Commit seen.json
+        run: |
+          git config user.name "Hermes Bot"
+          git config user.email "hermes@clypify.com"
+          git add seen.json
+          git diff --staged --quiet || git commit -m "chore: update seen.json [$(date -u +%Y-%m-%d)]"
+          git push
